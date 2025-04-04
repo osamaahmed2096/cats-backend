@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { UsersNextDeliveryDto } from './dto/users-next-delivery.dto';
 import { readFileSync } from 'fs';
 import { Customer, Cat } from './interfaces/customer.interface';
@@ -18,6 +18,12 @@ export class CommsService {
     }
 
   getUsersNextDelivery(id: string): UsersNextDeliveryDto {
+    // Added this check to ensure the id is provided
+    // Didn't feel the need to use a DTO for this as it's just a single ID being passed in
+    if (!id) {
+        throw new BadRequestException('Id is required');
+    }
+
     const customer = this.customers.find((customer: Customer) => customer.id === id);
 
     if (!customer) {
