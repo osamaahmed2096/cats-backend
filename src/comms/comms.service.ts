@@ -24,8 +24,14 @@ export class CommsService {
         throw new NotFoundException('Customer not found');
     }
 
-    const formattedCats = this.getFormattedCats(customer);
-    const totalPrice = this.getTotalPrice(customer);
+    const customersCats = customer.cats;
+
+    if (customersCats.length === 0 || customersCats.every((cat: Cat) => !cat.subscriptionActive)) {
+        throw new NotFoundException('Customer has no active cats');
+    }
+
+    const formattedCats = this.getFormattedCats(customersCats);
+    const totalPrice = this.getTotalPrice(customersCats);
 
     return {
         title: `Your next delivery for ${formattedCats}`,
@@ -35,12 +41,12 @@ export class CommsService {
     }
   }
 
-  private getFormattedCats(customer: Customer): string {
-    const activeCats = customer.cats.filter((cat: Cat) => cat.subscriptionActive);
+  private getFormattedCats(cats: Cat[]): string {
+    const activeCats = cats.filter((cat: Cat) => cat.subscriptionActive);
     return activeCats.map((cat: Cat) => cat.name).join(', ').replace(/, ([^,]*)$/, ' and $1');
   }
 
-  private getTotalPrice(customer: Customer): number {
-    return customer.cats.reduce((acc: number, cat: Cat) => acc + POUCH_PRICES[cat.pouchSize], 0);
+  private getTotalPrice(cats: Cat[]): number {
+    return cats.reduce((acc: number, cat: Cat) => acc + POUCH_PRICES[cat.pouchSize], 0);
   }
 }
