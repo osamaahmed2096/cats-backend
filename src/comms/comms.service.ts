@@ -1,26 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { UsersNextDeliveryDto } from './dto/users-next-delivery.dto';
 import { readFileSync } from 'fs';
-
-const data = readFileSync('data.json', 'utf8');
-const customers = JSON.parse(data);
-
-const POUCH_PRICES = {
-    A: 55.50,
-    B: 59.50,
-    C: 62.75,
-    D: 66.00,
-    E: 69.00,
-    F: 71.25,
-} as Record<string, number>;
+import { Customer, Cat } from './interfaces/customer.interface';
+import { POUCH_PRICES } from './constants/prices.constant';
 
 @Injectable()
 export class CommsService {
+    private readonly customers: Customer[] = [];
+
+    constructor() {
+        try {
+            const data = readFileSync('data.json', 'utf8');
+            this.customers = JSON.parse(data);
+        } catch (error) {
+            throw new InternalServerErrorException('Error reading data.json');
+        }
+    }
+
   getUsersNextDelivery(id: string): UsersNextDeliveryDto {
-    const customer = customers.find((customer: any) => customer.id === id);
-    const activeCats = customer.cats.filter((cat: any) => cat.subscriptionActive);
-    const formattedCats = activeCats.map((cat: any) => cat.name).join(', ').replace(/, ([^,]*)$/, ' and $1');
-    const totalPrice = activeCats.reduce((acc: number, cat: any) => acc + POUCH_PRICES[cat.pouchSize], 0);
+    const customer = this.customers.find((customer: Customer) => customer.id === id);
+
+    if (!customer) {
+        throw new NotFoundException('Customer not found');
+    }
+
+    const formattedCats = this.getFormattedCats(customer);
+    const totalPrice = this.getTotalPrice(customer);
 
     return {
         title: `Your next delivery for ${formattedCats}`,
@@ -28,5 +33,14 @@ export class CommsService {
         totalPrice: totalPrice,
         freeGift: totalPrice > 120
     }
+  }
+
+  private getFormattedCats(customer: Customer): string {
+    const activeCats = customer.cats.filter((cat: Cat) => cat.subscriptionActive);
+    return activeCats.map((cat: Cat) => cat.name).join(', ').replace(/, ([^,]*)$/, ' and $1');
+  }
+
+  private getTotalPrice(customer: Customer): number {
+    return customer.cats.reduce((acc: number, cat: Cat) => acc + POUCH_PRICES[cat.pouchSize], 0);
   }
 }
