@@ -13,7 +13,7 @@ yarn install
 yarn start
 ```
 
-The server runs on: `http://localhost:3000`
+The server runs on: `http://localhost:4000`
 
 ## 📡 Endpoint
 
