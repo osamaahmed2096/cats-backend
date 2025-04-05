@@ -1,5 +1,3 @@
-# 🐾 KatKin Take-Home – Backend
-
 ## 📦 Tech Stack
 
 - **NestJS** (TypeScript)
